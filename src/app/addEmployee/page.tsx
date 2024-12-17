@@ -12,9 +12,8 @@ import {
     Card,
     CardContent,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-
 import axios from "axios";
+import { styled } from "@mui/material/styles";
 
 const departments = ["HR", "Development", "Security", "Sales"];
 
@@ -27,28 +26,31 @@ interface FormData {
     dateOfJoining: string;
     role: string;
 }
-const SignInContainer = styled(Stack)(({ theme }) => ({
-    height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
-    minHeight: "100%",
-    padding: theme.spacing(2),
-    position: "relative",
-    [theme.breakpoints.up("sm")]: {
-        padding: theme.spacing(4),
-    },
-    "&::before": {
-        content: '""',
-        display: "block",
-        position: "absolute",
-        zIndex: -1,
-        inset: 0,
-        backgroundImage:
-            "linear-gradient(135deg, hsl(210, 36%, 96%) 0%, hsl(200, 50%, 85%) 50%, hsl(195, 60%, 80%) 100%)",
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        ...theme.applyStyles("dark", {
-            backgroundImage:
-                "linear-gradient(135deg, hsl(210, 30%, 10%) 0%, hsl(220, 25%, 15%) 50%, hsl(225, 20%, 20%) 100%)",
-        }),
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "100vh",
+    backgroundColor: theme.palette.common.black, 
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+    boxShadow: theme.shadows[5],
+    borderRadius: theme.spacing(2),
+    padding: theme.spacing(4),
+    maxWidth: 500,
+    width: "100%",
+    backgroundColor: theme.palette.common.white, 
+}));
+
+
+const StyledButton = styled(Button)(({ theme }) => ({
+    borderRadius: theme.spacing(1),
+    fontWeight: 600,
+    "&:hover": {
+        boxShadow: theme.shadows[3],
     },
 }));
 
@@ -79,19 +81,44 @@ const EmployeeForm: React.FC = () => {
             newErrors.department = "Department is required";
         if (!formData.dateOfJoining)
             newErrors.dateOfJoining = "Date of Joining is required";
-        if (new Date(formData.dateOfJoining) > new Date())
-            newErrors.dateOfJoining = "Date cannot be in the future";
         if (!formData.role) newErrors.role = "Role is required";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (validateForm()) {
-            console.log("Submitted Data:", formData);
-            alert("Form Submitted Successfully");
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
+        const data = new FormData(event.currentTarget);
+
+        const payload = {
+            name: data.get("name"),
+            empId: data.get("employeeId"),
+            email: data.get("email"),
+            phone: data.get("phoneNumber"),
+            dep: data.get("department"),
+            doj: data.get("dateOfJoining"),
+            role: data.get("role"),
+        };
+
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/api/employee/create",
+                payload
+            );
+            console.log("Response:", response.data);
+            if (response.data.includes("Duplicate")) {
+                alert("Employee ID or the email is already exists.");
+                return;
+            }
+            alert("Employee added successfully!");
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Login failed! Please check your credentials.");
         }
     };
 
@@ -114,113 +141,125 @@ const EmployeeForm: React.FC = () => {
     };
 
     return (
-        <SignInContainer maxWidth="sm">
-            <Box sx={{ mt: 5 }}>
-                <Card
-                    sx={{
-                        backgroundColor: "#ffffff",
-                        boxShadow: 3,
-                        borderRadius: 2,
-                    }}
-                >
-                    <CardContent>
-                        <Typography variant="h4" align="center" gutterBottom>
-                            Employee Management System
-                        </Typography>
-                        <form onSubmit={handleSubmit} noValidate>
-                            <Stack spacing={2}>
-                                <TextField
-                                    label="Name"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    error={!!errors.name}
-                                    helperText={errors.name}
-                                />
-                                <TextField
-                                    label="Employee ID"
-                                    name="employeeId"
-                                    value={formData.employeeId}
-                                    onChange={handleChange}
-                                    error={!!errors.employeeId}
-                                    helperText={errors.employeeId}
-                                />
-                                <TextField
-                                    label="Email"
-                                    name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    error={!!errors.email}
-                                    helperText={errors.email}
-                                />
-                                <TextField
-                                    label="Phone Number"
-                                    name="phoneNumber"
-                                    type="tel"
-                                    value={formData.phoneNumber}
-                                    onChange={handleChange}
-                                    error={!!errors.phoneNumber}
-                                    helperText={errors.phoneNumber}
-                                />
-                                <TextField
-                                    select
-                                    label="Department"
-                                    name="department"
-                                    value={formData.department}
-                                    onChange={handleChange}
-                                    error={!!errors.department}
-                                    helperText={errors.department}
+        <StyledContainer>
+            <StyledCard>
+                <CardContent>
+                    <Typography
+                        variant="h4"
+                        component="h1"
+                        gutterBottom
+                        align="center"
+                        sx={{ fontWeight: "bold", color: "primary.main" }}
+                    >
+                        Employee Management System
+                    </Typography>
+                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                        <Stack spacing={3}>
+                            <TextField
+                                label="Name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                error={!!errors.name}
+                                helperText={errors.name}
+                                fullWidth
+                                variant="outlined"
+                            />
+                            <TextField
+                                label="Employee ID"
+                                name="employeeId"
+                                value={formData.employeeId}
+                                onChange={handleChange}
+                                error={!!errors.employeeId}
+                                helperText={errors.employeeId}
+                                fullWidth
+                                variant="outlined"
+                            />
+                            <TextField
+                                label="Email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                error={!!errors.email}
+                                helperText={errors.email}
+                                fullWidth
+                                variant="outlined"
+                            />
+                            <TextField
+                                label="Phone Number"
+                                name="phoneNumber"
+                                type="tel"
+                                value={formData.phoneNumber}
+                                onChange={handleChange}
+                                error={!!errors.phoneNumber}
+                                helperText={errors.phoneNumber}
+                                fullWidth
+                                variant="outlined"
+                            />
+                            <TextField
+                                select
+                                label="Department"
+                                name="department"
+                                value={formData.department}
+                                onChange={handleChange}
+                                error={!!errors.department}
+                                helperText={errors.department}
+                                fullWidth
+                                variant="outlined"
+                            >
+                                {departments.map((dept) => (
+                                    <MenuItem key={dept} value={dept}>
+                                        {dept}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                            <TextField
+                                type="date"
+                                label="Date of Joining"
+                                name="dateOfJoining"
+                                InputLabelProps={{ shrink: true }}
+                                value={formData.dateOfJoining}
+                                onChange={handleChange}
+                                error={!!errors.dateOfJoining}
+                                helperText={errors.dateOfJoining}
+                                fullWidth
+                                variant="outlined"
+                            />
+                            <TextField
+                                label="Role"
+                                name="role"
+                                value={formData.role}
+                                onChange={handleChange}
+                                error={!!errors.role}
+                                helperText={errors.role}
+                                fullWidth
+                                variant="outlined"
+                            />
+
+                            <Stack direction="row" spacing={2} mt={1}>
+                                <StyledButton
+                                    variant="contained"
+                                    color="primary"
+                                    type="submit"
+                                    fullWidth
                                 >
-                                    {departments.map((dept) => (
-                                        <MenuItem key={dept} value={dept}>
-                                            {dept}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-                                <TextField
-                                    type="date"
-                                    label="Date of Joining"
-                                    name="dateOfJoining"
-                                    InputLabelProps={{ shrink: true }}
-                                    value={formData.dateOfJoining}
-                                    onChange={handleChange}
-                                    error={!!errors.dateOfJoining}
-                                    helperText={errors.dateOfJoining}
-                                />
-                                <TextField
-                                    select
-                                    label="Role"
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    error={!!errors.role}
-                                    helperText={errors.role}
-                                ></TextField>
-                                <Stack direction="row" spacing={2}>
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        type="submit"
-                                        fullWidth
-                                    >
-                                        Submit
-                                    </Button>
-                                    <Button
-                                        variant="outlined"
-                                        color="secondary"
-                                        onClick={handleReset}
-                                        fullWidth
-                                    >
-                                        Reset
-                                    </Button>
-                                </Stack>
+                                    Submit
+                                </StyledButton>
+                                <StyledButton
+                                    variant="outlined"
+                                    color="secondary"
+                                    onClick={handleReset}
+                                    fullWidth
+                                >
+                                    Reset
+                                </StyledButton>
                             </Stack>
-                        </form>
-                    </CardContent>
-                </Card>
-            </Box>
-        </SignInContainer>
+                        </Stack>
+                    </Box>
+                </CardContent>
+            </StyledCard>
+        </StyledContainer>
     );
 };
 
