@@ -1,101 +1,201 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import * as React from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import CssBaseline from "@mui/material/CssBaseline";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
+import FormControl from "@mui/material/FormControl";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import MuiCard from "@mui/material/Card";
+import { styled } from "@mui/material/styles";
+import axios from "axios";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+const Card = styled(MuiCard)(({ theme }) => ({
+    display: "flex",
+    flexDirection: "column",
+    alignSelf: "center",
+    width: "100%",
+    padding: theme.spacing(4),
+    gap: theme.spacing(2),
+    margin: "auto",
+    [theme.breakpoints.up("sm")]: {
+        maxWidth: "450px",
+    },
+    boxShadow:
+        "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
+    ...theme.applyStyles("dark", {
+        boxShadow:
+            "hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px",
+    }),
+}));
+
+const SignInContainer = styled(Stack)(({ theme }) => ({
+    height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
+    minHeight: "100%",
+    padding: theme.spacing(2),
+    position: "relative",
+    [theme.breakpoints.up("sm")]: {
+        padding: theme.spacing(4),
+    },
+    "&::before": {
+        content: '""',
+        display: "block",
+        position: "absolute",
+        zIndex: -1,
+        inset: 0,
+        backgroundImage:
+            "linear-gradient(135deg, hsl(210, 36%, 96%) 0%, hsl(200, 50%, 85%) 50%, hsl(195, 60%, 80%) 100%)",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        ...theme.applyStyles("dark", {
+            backgroundImage:
+                "linear-gradient(135deg, hsl(210, 30%, 10%) 0%, hsl(220, 25%, 15%) 50%, hsl(225, 20%, 20%) 100%)",
+        }),
+    },
+}));
+
+export default function SignIn(props: any) {
+    const [emailError, setEmailError] = React.useState(false);
+    const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
+    const [passwordError, setPasswordError] = React.useState(false);
+    const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
+    const [open, setOpen] = React.useState(false);
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!validateInputs()) {
+            return;
+        }
+
+        const data = new FormData(event.currentTarget);
+
+        const payload = {
+            email: data.get("email"),
+            password: data.get("password"),
+        };
+
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/api/administrators/auth",
+                payload
+            );
+            console.log("Response:", response.data);
+            if (response.data == "Invalid Credentials") {
+                alert("Login failed! Please check your credentials.");
+                return;
+            }
+            alert("Login successful!");
+            window.location.href = "/addEmployee";
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Login failed! Please check your credentials.");
+        }
+    };
+
+    const validateInputs = () => {
+        const email: any = document.getElementById("email");
+        const password: any = document.getElementById("password");
+
+        let isValid = true;
+
+        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+            setEmailError(true);
+            setEmailErrorMessage("Please enter a valid email address.");
+            isValid = false;
+        } else {
+            setEmailError(false);
+            setEmailErrorMessage("");
+        }
+
+        if (!password.value || password.value.length < 6) {
+            setPasswordError(true);
+            setPasswordErrorMessage("wrong password");
+            isValid = false;
+        } else {
+            setPasswordError(false);
+            setPasswordErrorMessage("");
+        }
+
+        return isValid;
+    };
+
+    return (
+        <div>
+            <SignInContainer direction="column" justifyContent="space-between">
+                <Card variant="outlined">
+                    <Typography
+                        component="h1"
+                        variant="h4"
+                        sx={{
+                            width: "100%",
+                            fontSize: "clamp(2rem, 10vw, 2.15rem)",
+                        }}
+                    >
+                        Adminstrator Sign in
+                    </Typography>
+                    <Box
+                        component="form"
+                        onSubmit={handleSubmit}
+                        noValidate
+                        sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            width: "100%",
+                            gap: 2,
+                        }}
+                    >
+                        <FormControl>
+                            <FormLabel htmlFor="email">Email</FormLabel>
+                            <TextField
+                                error={emailError}
+                                helperText={emailErrorMessage}
+                                id="email"
+                                type="email"
+                                name="email"
+                                placeholder="your@email.com"
+                                autoComplete="email"
+                                autoFocus
+                                required
+                                fullWidth
+                                variant="outlined"
+                                color={emailError ? "error" : "primary"}
+                            />
+                        </FormControl>
+                        <FormControl>
+                            <FormLabel htmlFor="password">Password</FormLabel>
+                            <TextField
+                                error={passwordError}
+                                helperText={passwordErrorMessage}
+                                name="password"
+                                placeholder="••••••"
+                                type="password"
+                                id="password"
+                                autoComplete="current-password"
+                                autoFocus
+                                required
+                                fullWidth
+                                variant="outlined"
+                                color={passwordError ? "error" : "primary"}
+                            />
+                        </FormControl>
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            onClick={validateInputs}
+                        >
+                            Sign in
+                        </Button>
+                    </Box>
+                </Card>
+            </SignInContainer>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+        // </AppTheme>
+    );
 }
